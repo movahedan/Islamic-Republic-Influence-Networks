@@ -1,0 +1,19 @@
+# https://lefthook.dev/configuration/
+
+pre-commit:
+  parallel: true
+  commands:
+    check:
+      glob: "extension/**/*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc,html,css,md,mdx,yaml,yml}"
+      run: bun --cwd extension run check:fix --no-errors-on-unmatched {staged_files}
+      stage_fixed: true
+    typescript:
+      glob: "extension/**/*.{ts,tsx}"
+      run: bun --cwd extension run check:types
+
+pre-push:
+  parallel: true
+  commands:
+    build:
+      glob: "extension/**/*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc,html,css,md,mdx,yaml,yml}"
+      run: bun --cwd extension run build

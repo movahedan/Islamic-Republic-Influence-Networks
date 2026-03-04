@@ -1,0 +1,24 @@
+{
+	"name": "extension",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"check": "biome check .",
+		"check:fix": "biome check . --write",
+		"build:handles": "bun run scripts/build-handles.ts",
+		"build": "bun run build:handles && vite build",
+		"dev": "bun run build:handles && vite build --watch"
+	},
+	"dependencies": {
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1"
+	},
+	"devDependencies": {
+		"@types/react": "^18.3.12",
+		"@types/react-dom": "^18.3.1",
+		"@vitejs/plugin-react": "^4.3.1",
+		"typescript": "^5.6.3",
+		"vite": "^5.4.8",
+		"vite-plugin-static-copy": "^1.0.6"
+	}
+}
