@@ -7,8 +7,8 @@
 		"check:fix": "biome check . --write",
 		"check:types": "bun run --bun tsc --noEmit",
 		"build:handles": "bun run scripts/build-handles.ts",
-		"build": "bun run build:handles && vite build",
-		"dev": "bun run build:handles && vite build --watch",
+		"build": "NODE_OPTIONS='--max-old-space-size=4096' bun run build:handles && vite build",
+		"dev": "NODE_OPTIONS='--max-old-space-size=4096' bun run build:handles && vite build --watch",
 		"deploy": "bun run scripts/deploy.ts"
 	},
 	"dependencies": {

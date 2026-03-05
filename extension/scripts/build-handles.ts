@@ -12,7 +12,7 @@ const outFile = join(outDir, "handles.json");
 const files = ["IR-X-Network.json", "MEK.json", "White-Internet.json"];
 
 const categoryLabels: Record<string, string> = {
-	"ir-x-network": "IRGC Supporters",
+	"ir-x-network": "Marked",
 	mek: "Mojahedin Organization",
 	"white-internet": "IRGC SimCard",
 };

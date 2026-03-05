@@ -1,3 +1,6 @@
+export const WARNING_HOST_CLASS = "ir-warning-host";
+export const RETWEETS_SUMMARY_HOST_CLASS = "ir-retweets-summary-host";
+
 export function findTweetArticles(root: ParentNode): NodeListOf<HTMLElement> {
 	return root.querySelectorAll<HTMLElement>('article[role="article"]');
 }
@@ -31,17 +34,69 @@ export function isRetweet(article: HTMLElement): boolean {
 	return /Reposted|retweeted/i.test(article.textContent ?? "");
 }
 
+const PROFILE_TAB_TEXT = new Set(["posts", "replies", "media"]);
 export function isProfilePage(): boolean {
-	let path = document.location.pathname;
-	if (path.endsWith("/")) path = path.slice(0, -1);
-	if (!path.startsWith("/") || path.length <= 1) return false;
-	const afterFirstSlash = path.slice(1);
-	return !afterFirstSlash.includes("/");
+	const tabs = document.querySelectorAll<HTMLAnchorElement>('a[role="tab"]');
+	for (const tab of tabs) {
+		const tabText = tab.innerText.toLowerCase();
+		if (PROFILE_TAB_TEXT.has(tabText)) return true;
+	}
+	return false;
 }
 
 export function getHandleFromProfileUrl(): string | null {
 	const segment = document.location.pathname.split("/").filter(Boolean)[0];
 	return segment ?? null;
+}
+
+export function isRetweetsPage(): boolean {
+	const path = document.location.pathname;
+	return path.includes("/retweets") && path.includes("/status/");
+}
+
+export function findRetweetsPageTabBar(root: ParentNode): HTMLElement | null {
+	return root.querySelector<HTMLElement>('[role="navigation"]:has([role="tablist"])');
+}
+
+export function findUserCells(root: ParentNode): NodeListOf<HTMLElement> {
+	return root.querySelectorAll<HTMLElement>('[data-testid="UserCell"]');
+}
+
+export function findFirstUserCell(root: ParentNode): HTMLElement | null {
+	return root.querySelector<HTMLElement>('[data-testid="UserCell"]');
+}
+
+export function isOurInjectedNode(node: Node): boolean {
+	if (node.nodeType !== Node.ELEMENT_NODE) return false;
+	const el = node as Element;
+	return (
+		el.classList?.contains(WARNING_HOST_CLASS) === true ||
+		el.classList?.contains(RETWEETS_SUMMARY_HOST_CLASS) === true ||
+		el.closest?.(`.${WARNING_HOST_CLASS}`) != null ||
+		el.closest?.(`.${RETWEETS_SUMMARY_HOST_CLASS}`) != null
+	);
+}
+
+export function shouldScanNode(node: Node): boolean {
+	if (node.nodeType !== Node.ELEMENT_NODE) return false;
+	const el = node as Element;
+	if (el.getAttribute?.("role") === "article") return true;
+	if (el.getAttribute?.("data-testid") === "UserCell") return true;
+	return (
+		el.querySelector?.('article[role="article"]') != null ||
+		el.querySelector?.('[data-testid="UserCell"]') != null ||
+		el.querySelector?.('[data-testid="UserName"]') != null ||
+		el === document.documentElement
+	);
+}
+
+export function extractHandleFromUserCell(cell: HTMLElement): string | null {
+	const links = cell.querySelectorAll<HTMLAnchorElement>('a[href^="/"]');
+	for (const a of links) {
+		const href = a.getAttribute("href") ?? "";
+		if (/^\/[A-Za-z0-9_]{1,20}$/.test(href)) return href.slice(1).toLowerCase();
+	}
+	return null;
 }
 
 function hrefFirstSegmentMatches(anchor: HTMLAnchorElement, normalized: string): boolean {

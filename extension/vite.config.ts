@@ -12,6 +12,7 @@ export default defineConfig({
 	build: {
 		outDir: "dist",
 		emptyOutDir: true,
+		chunkSizeWarningLimit: 1024,
 		rollupOptions: {
 			input: {
 				content: "src/content/index.ts",

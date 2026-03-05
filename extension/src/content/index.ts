@@ -1,72 +1,67 @@
+const THROTTLE_MS = 80;
+
 import {
-	extractHandle,
-	findActionBar,
-	findProfileUserName,
-	findTweetText,
-	getHandleFromProfileUrl,
-	getPageTheme,
+	processProfilePage,
+	processTweet,
+	processUserCell,
+	refreshRetweetsSummary,
+} from "./processors";
+import {
+	findTweetArticles,
+	findUserCells,
+	isOurInjectedNode,
 	isProfilePage,
-	isRetweet,
-} from "./dom-extractors";
-import { getCategoryLabel } from "./get-category-label";
-import { mountHost } from "./mount-host";
-import { observeAndProcess } from "./observe";
+	isRetweetsPage,
+	shouldScanNode,
+} from "./selectors";
 
-type WarningMessageProps = {
-	isRetweet?: boolean;
-	isProfilePage?: boolean;
-};
+function throttledObserve(): void {
+	const seen = new WeakSet<HTMLElement>();
+	let throttleScheduled = false;
+	let pendingRoots: Set<ParentNode> = new Set();
 
-function buildWarningMessage(categoryLabel: string, props: WarningMessageProps): string {
-	return props.isProfilePage
-		? `Warning: This profile is a ${categoryLabel} account`
-		: props.isRetweet
-			? `Warning: This tweet has been retweeted by a ${categoryLabel} account`
-			: `Warning: This tweet has been sent from a ${categoryLabel} account`;
+	const scan = (root: ParentNode) => {
+		if (isProfilePage()) processProfilePage();
+
+		const userCells = findUserCells(root);
+		for (const cell of userCells) {
+			if (seen.has(cell)) continue;
+			seen.add(cell) && processUserCell(cell);
+		}
+
+		const articles = findTweetArticles(root);
+		for (const a of articles) {
+			if (seen.has(a)) continue;
+			seen.add(a) && processTweet(a);
+		}
+
+		if (isRetweetsPage()) refreshRetweetsSummary();
+	};
+
+	const flushPending = () => {
+		throttleScheduled = false;
+		const roots = pendingRoots;
+		pendingRoots = new Set();
+		for (const root of roots) scan(root);
+	};
+
+	scan(document);
+
+	const mo = new MutationObserver((mutations) => {
+		for (const m of mutations) {
+			if (m.target.nodeType !== Node.ELEMENT_NODE) continue;
+			if (isOurInjectedNode(m.target)) continue;
+			if (!shouldScanNode(m.target)) continue;
+			pendingRoots.add(m.target as ParentNode);
+		}
+		if (pendingRoots.size === 0) return;
+		if (!throttleScheduled) {
+			throttleScheduled = true;
+			setTimeout(flushPending, THROTTLE_MS);
+		}
+	});
+
+	mo.observe(document.documentElement, { childList: true, subtree: true });
 }
 
-function processTweet(article: HTMLElement): void {
-	const theme = getPageTheme();
-	const handle = extractHandle(article);
-	const categoryLabel = handle ? getCategoryLabel(handle) : null;
-	if (!categoryLabel) return;
-
-	const message = buildWarningMessage(categoryLabel, { isRetweet: isRetweet(article) });
-
-	const host = mountHost(article, message, theme);
-	if (!host) return;
-
-	const actionBar = findActionBar(article);
-	const tweetText = findTweetText(article);
-
-	article?.parentElement?.insertBefore(host, article);
-	if (actionBar?.parentElement) {
-		actionBar?.parentElement?.insertBefore(host, actionBar);
-	} else if (tweetText?.parentElement) {
-		tweetText?.parentElement?.insertBefore(host, tweetText);
-	} else {
-		article?.parentElement?.insertBefore(host, article);
-	}
-}
-
-function processProfilePage(): void {
-	const theme = getPageTheme();
-	if (!isProfilePage()) return;
-
-	const handle = getHandleFromProfileUrl();
-	if (!handle) return;
-
-	const userNameEl = findProfileUserName(handle);
-	if (!userNameEl?.parentElement) return;
-
-	const categoryLabel = getCategoryLabel(handle);
-	if (!categoryLabel) return;
-
-	const message = buildWarningMessage(categoryLabel, { isProfilePage: true });
-	const host = mountHost(userNameEl.parentElement, message, theme);
-	if (!host) return;
-
-	userNameEl.after(host);
-}
-
-observeAndProcess(processTweet, processProfilePage);
+throttledObserve();

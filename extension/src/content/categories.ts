@@ -23,3 +23,11 @@ export function getCategoryLabel(handle: string): string | null {
 	const id = handleToCategoryIds.get(handle.toLowerCase())?.[0];
 	return id != null ? (categoryLabels[id] ?? id) : null;
 }
+
+export function getCategoryIds(handle: string): readonly string[] {
+	return handleToCategoryIds.get(handle.toLowerCase()) ?? [];
+}
+
+export function getCategoryLabelById(categoryId: string): string {
+	return categoryLabels[categoryId] ?? categoryId;
+}
