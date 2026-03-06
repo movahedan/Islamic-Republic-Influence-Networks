@@ -1,4 +1,5 @@
 import react from "@vitejs/plugin-react";
+import path from "path";
 import { defineConfig } from "vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
@@ -9,6 +10,11 @@ export default defineConfig({
 			targets: [{ src: "manifest.json", dest: "." }],
 		}),
 	],
+	resolve: {
+		alias: {
+			"@": path.resolve(__dirname, "src"),
+		},
+	},
 	build: {
 		outDir: "dist",
 		emptyOutDir: true,

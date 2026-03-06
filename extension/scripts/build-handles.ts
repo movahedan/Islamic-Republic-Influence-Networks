@@ -9,12 +9,11 @@ const dataDir = join(ROOT, "..", "Data");
 const outDir = join(ROOT, "src", "data");
 const outFile = join(outDir, "handles.json");
 
-const files = ["IR-X-Network.json", "MEK.json", "White-Internet.json"];
+const files = ["IR-X-Network.json", "MEK.json"];
 
 const categoryLabels: Record<string, string> = {
-	"ir-x-network": "Marked",
-	mek: "Mojahedin Organization",
-	"white-internet": "IRGC SimCard",
+	"ir-x-network": "Flagged",
+	mek: "Mojahedin",
 };
 
 function norm(handle: string) {
